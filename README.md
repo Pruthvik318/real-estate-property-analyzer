@@ -1,290 +1,302 @@
-# Internship Project Template
+# Real Estate Property Analyzer
 
-This template includes a FastAPI backend with Google Gemini LLM integration and a React frontend with Tailwind CSS.
+---
 
-## Project Structure
+## Project Overview
 
+### Description
+A web application that allows users to upload property photos and floor plans. The application uses AI to analyze images, extract property features (room count, condition, amenities), generate professional property descriptions, and provide property valuation estimates. Users can compare properties and manage their property listings in a dashboard.
+
+### Target Users
+- Real estate agents and brokers
+- Property owners looking to list properties
+- Real estate investors evaluating properties
+- Property managers documenting properties
+
+### Core Value Proposition
+- Automated property analysis saves time and ensures consistency
+- AI-generated descriptions help create professional listings quickly
+- Property valuation estimates provide market insights
+- Centralized property management dashboard
+
+---
+
+## Technology Stack
+
+### Frontend
+- React 19
+- Vite (build tool)
+- Tailwind CSS (styling)
+- React Router DOM (routing)
+- Axios or Fetch (API calls)
+- Firebase Authentication SDK
+
+### Backend
+- Python 3.12+
+- FastAPI (REST API)
+- Uvicorn (ASGI server)
+- Pydantic (data validation)
+- LangChain (LLM integration)
+- Google Gemini LLM (Vision + Text)
+
+### Database
+- SQLite (for application data ONLY, NOT authentication)
+
+### Authentication
+- Firebase Authentication (email/password)
+
+### AI/ML
+- LangChain (basic chains)
+- Google Gemini Vision LLM (for image analysis)
+- Google Gemini Text LLM (for description generation and valuation)
+
+---
+
+## Architecture Overview
+
+### System Architecture
 ```
-.
-├── Backend/                    # FastAPI backend application
-│   ├── main.py                 # Main backend server file
-│   ├── pyproject.toml          # Python project configuration
-│   ├── requirements.txt        # Python dependencies
-│   ├── uv.lock                 # UV lock file for dependency versions
-│   ├── README.md               # Backend-specific documentation
-│   └── .env                    # Environment variables (create this file)
-│
-└── Frontend/                   # React frontend application
-    ├── public/
-    │   └── vite.svg            # Vite logo
-    ├── src/
-    │   ├── components/
-    │   │   └── QuoteGenerator.jsx  # Quote generator component
-    │   ├── assets/
-    │   │   └── react.svg       # React logo
-    │   ├── App.jsx             # Main app component (layout wrapper)
-    │   ├── App.css             # App-specific styles
-    │   ├── main.jsx            # React entry point
-    │   └── index.css           # Global styles with Tailwind
-    ├── eslint.config.js        # ESLint configuration
-    ├── index.html              # HTML entry point
-    ├── package.json            # Node.js dependencies and scripts
-    ├── package-lock.json       # npm lock file
-    ├── postcss.config.js       # PostCSS configuration
-    ├── tailwind.config.js      # Tailwind CSS configuration
-    ├── vite.config.js          # Vite build tool configuration
-    └── README.md               # Frontend-specific documentation
+Frontend (React) → Backend (FastAPI) → SQLite Database
+                    ↓
+              LangChain + Gemini LLM
+                    ↓
+              Vision LLM (Image Analysis)
+              Text LLM (Description & Valuation)
 ```
+
+### Data Flow
+```
+User Action → Frontend Component → API Call → Backend Endpoint → Vision LLM → Database → Response → UI Update
+```
+
+### Example Flow: Property Upload
+```
+Upload Property Images → ImageUploader → POST /api/properties → FastAPI → LangChain+Vision LLM → Analysis → SQLite → Property Created → Display in Dashboard
+```
+
+---
+
+## Issue Flow
+
+This project is broken down into 18 issues that progress from foundation to advanced features:
+
+### Foundation Phase (Issues #01-08)
+- **Issue #01**: Project Setup - README with project structure and setup instructions
+- **Issue #02**: Landing Page UI - Static landing page with app information
+- **Issue #03**: Signup Page UI - Static signup form
+- **Issue #04**: Login Page UI - Static login form
+- **Issue #05**: Firebase Auth Setup - Configure Firebase project and SDK
+- **Issue #06**: Integrate Signup with Firebase - Connect signup form to Firebase
+- **Issue #07**: Integrate Login with Firebase - Connect login form to Firebase
+- **Issue #08**: Dashboard UI - Protected dashboard with property list structure
+
+### Core Features Phase (Issues #09-14)
+- **Issue #09**: Upload Property Feature - Combined frontend+backend for property creation with images
+- **Issue #10**: Image Analysis with Vision LLM - Backend LLM integration for image analysis
+- **Issue #11**: Display Properties - Backend API and frontend integration to show properties
+- **Issue #12**: Property Detail View - Combined frontend+backend for detailed property view
+- **Issue #13**: Property Description Generation - LangChain integration for description generation
+- **Issue #14**: Delete Property Feature - Backend API and frontend integration for deletion
+
+### Advanced Features Phase (Issues #15-17)
+- **Issue #15**: Property Valuation - Combined frontend+backend for property value estimation
+- **Issue #16**: Property Comparison - Combined frontend+backend for comparing exactly 2 properties
+- **Issue #17**: Search and Filter - Combined frontend+backend for searching and filtering properties
+
+### Final Phase (Issue #18)
+- **Issue #18**: Final Testing - Complete application flow verification and documentation
+
+---
+
+## API Endpoints
+
+### Property Management
+
+| Method | Endpoint | Protected | Purpose | LLM Integration |
+|--------|----------|-----------|---------|-----------------|
+| POST | /api/properties | Yes | Create new property with main image and optional floor plan | Yes (Vision LLM) |
+| GET | /api/properties | Yes | Get all user properties | No |
+| GET | /api/properties/:id | Yes | Get single property with all details | No |
+| PATCH | /api/properties/:id | Yes | Update property metadata | No |
+| DELETE | /api/properties/:id | Yes | Delete property | No |
+
+### Property Analysis
+
+| Method | Endpoint | Protected | Purpose | LLM Integration |
+|--------|----------|-----------|---------|-----------------|
+| POST | /api/properties/:id/analyze | Yes | Re-analyze property images | Yes (Vision LLM + Text LLM) |
+| POST | /api/properties/:id/valuation | Yes | Re-estimate property value | Yes (Text LLM) |
+
+### Property Search & Comparison
+
+| Method | Endpoint | Protected | Purpose | LLM Integration |
+|--------|----------|-----------|---------|-----------------|
+| GET | /api/properties/compare | Yes | Compare 2 properties | No |
+| GET | /api/search | Yes | Search properties | No |
+
+**Note:** Authentication is handled entirely on the frontend via Firebase SDK. No backend auth endpoints are needed.
+
+---
+
+## Frontend Structure
+
+### Pages
+
+| Page Name | Route | Protected | Purpose | Main Components |
+|-----------|-------|-----------|---------|----------------|
+| Landing | / | No | Welcome page with app info | Navbar, Hero, Features, Footer |
+| Signup | /signup | No | User registration | SignupForm |
+| Login | /login | No | User authentication | LoginForm |
+| Dashboard | /dashboard | Yes | Main user interface with property list | Navbar, PropertyList, UploadButton, SearchBar |
+| Property Detail | /properties/:id | Yes | View single property with all details | PropertyDetail, ImageGallery, AnalysisView, ValuationCard |
+| Property Comparison | /compare | Yes | Compare 2 properties side-by-side | ComparisonView, PropertyCard |
+| Add Property | /properties/new | Yes | Upload new property with images | PropertyForm, ImageUploader |
+
+### Key Components
+
+- **Navbar**: Navigation header with user info and logout
+- **PropertyList**: Grid/list display of properties
+- **PropertyCard**: Individual property card component
+- **PropertyForm**: Form for property creation
+- **ImageUploader**: Component for uploading main property image and optional floor plan
+- **PropertyDetail**: Full property view container
+- **ImageGallery**: Display main image and floor plan (if provided)
+- **AnalysisView**: Display AI analysis results
+- **ValuationCard**: Display property valuation estimate
+- **ComparisonView**: Side-by-side property comparison
+- **SearchBar**: Search interface for properties
+- **FilterPanel**: Filter options for properties
+
+---
+
+## Database Schema
+
+### Tables
+
+**properties**
+- Stores property metadata (name, address, description, valuation)
+- Stores image paths: mainImage (required), floorPlan (optional)
+- Links to user via user reference
+- Contains timestamps
+
+**Note:** Images can be stored directly in properties table (simpler) or in separate property_images table
+
+**property_analysis**
+- Stores AI analysis results
+- Links to property via property reference
+- Contains room_count, features (JSON/text), condition, analysis_date
+
+**Note:** Specific fields and relationships are designed by students. This is conceptual guidance only.
+
+---
+
+## LLM Integration
+
+### Vision LLM (Gemini Vision)
+- **Used in**: POST /api/properties, POST /api/properties/:id/analyze
+- **Purpose**: Analyze property images to extract features
+- **Extracts**: Room count, property features, condition assessment, property style/type
+
+### Text LLM (Gemini)
+- **Used in**: POST /api/properties/:id/analyze, POST /api/properties/:id/valuation
+- **Purpose**: Generate property descriptions and estimate valuations
+- **Generates**: Professional property descriptions, property value estimates with reasoning
+
+### Important Notes
+- NO OCR libraries (PyTesseract, Tesseract)
+- NO object detection libraries (YOLOv8, etc.)
+- Use Vision LLM for ALL image understanding
+- Use LangChain for LLM integration
+- Property valuation is educational, not professional appraisal
+
+---
 
 ## Getting Started
 
-### Clone the Repository
+### Prerequisites
+- Python 3.12+
+- UV Package Manager
+- Node.js 18+
+- npm or yarn
+- Google API Key (for Gemini LLM)
+- Firebase project (for authentication)
 
-First, you need to clone this repository to your local machine. This will download all the project files to your computer.
+### Setup Instructions
 
-**Repository URL:** https://github.com/progressionschool/internship-project-template
-
-**On Windows:**
-
-1. Open **Git Bash** (if you have Git installed) or **Command Prompt**
-2. Navigate to the directory where you want to save the project:
+1. **Clone the repository**
    ```bash
-   cd C:\Users\YourName\Desktop
-   ```
-   (Replace `YourName` with your actual username)
-3. Clone the repository:
-   ```bash
-   git clone https://github.com/progressionschool/internship-project-template.git
-   ```
-4. Navigate into the project directory:
-   ```bash
-   cd internship-project-template
+   git clone <repository-url>
+   cd real-estate-property-analyzer
    ```
 
-**On macOS:**
-
-1. Open **Terminal** (you can find it in Applications > Utilities)
-2. Navigate to the directory where you want to save the project:
+2. **Backend Setup**
    ```bash
-   cd ~/Desktop
+   cd Backend
+   uv venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   uv add -r requirements.txt
    ```
-   (Or any other directory you prefer)
-3. Clone the repository:
+   Create `.env` file with:
+   ```
+   GOOGLE_API_KEY=your_api_key_here
+   ```
+   Run backend:
    ```bash
-   git clone https://github.com/progressionschool/internship-project-template.git
+   uvicorn main:app --reload
    ```
-4. Navigate into the project directory:
+
+3. **Frontend Setup**
    ```bash
-   cd internship-project-template
+   cd Frontend
+   npm install
+   ```
+   Configure Firebase in `src/firebase.js`
+   Run frontend:
+   ```bash
+   npm run dev
    ```
 
-**Note:** Make sure you have Git installed on your system. If you don't have Git installed, download it from [git-scm.com](https://git-scm.com/downloads).
-
-## Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-- **Python 3.12+** - [Download Python](https://www.python.org/downloads/)
-- **UV Package Manager** - Fast Python package installer (see installation below)
-- **Node.js 18+** - [Download Node.js](https://nodejs.org/)
-- **npm** (comes with Node.js) or **yarn**
-- **Google API Key** - Get one from [Google AI Studio](https://makersuite.google.com/app/apikey)
-
-## Backend Setup
-
-### 1. Install UV Package Manager
-
-Install UV using pip:
-
-```bash
-pip install uv
-```
-
-For alternative installation methods, see the [UV documentation](https://github.com/astral-sh/uv).
-
-### 2. Navigate to Backend Directory
-
-```bash
-cd Backend
-```
-
-### 3. Create Virtual Environment
-
-Create a virtual environment using UV:
-
-```bash
-uv venv
-```
-
-This will create a `.venv` folder in the Backend directory.
-
-### 4. Activate Virtual Environment
-
-Activate the virtual environment:
-
-**On Windows:**
-```bash
-.venv\Scripts\activate
-```
-
-**On macOS/Linux:**
-```bash
-source .venv/bin/activate
-```
-
-### 5. Install Dependencies
-
-Install all packages from `requirements.txt`:
-
-```bash
-uv add -r requirements.txt
-```
-
-### 6. Create Environment File
-
-Create a `.env` file in the `Backend` directory:
-
-```bash
-# On macOS/Linux
-touch .env
-
-# On Windows
-type nul > .env
-```
-
-Add your Google API key to the `.env` file:
-
-```
-GOOGLE_API_KEY=your_api_key_here
-```
-
-Replace `your_api_key_here` with your actual Google API key from [Google AI Studio](https://makersuite.google.com/app/apikey).
-
-### 7. Run the Backend Server
-
-```bash
-uvicorn main:app --reload
-```
-
-The backend server will start at: **http://localhost:8000**
-
-- API Documentation: http://localhost:8000/docs
-- Health Check: http://localhost:8000/health
-- Random Quote Endpoint: http://localhost:8000/api/random-quote
-
-## Frontend Setup
-
-### 1. Navigate to Frontend Directory
-
-Open a new terminal window and navigate to the Frontend directory:
-
-```bash
-cd Frontend
-```
-
-### 2. Install Dependencies
-
-```bash
-npm install
-```
-
-### 3. Run the Frontend Development Server
-
-```bash
-npm run dev
-```
-
-The frontend will start at: **http://localhost:5173** (or another port if 5173 is busy)
-
-## Testing the Connection
-
-1. Make sure both servers are running:
-
-   - Backend: http://localhost:8000
+4. **Access Application**
    - Frontend: http://localhost:5173
+   - Backend API: http://localhost:8000
+   - API Documentation: http://localhost:8000/docs
 
-2. Open your browser and go to: http://localhost:5173
+---
 
-3. Click the "Generate Quote" button
+## Development Workflow
 
-4. You should see a random inspirational quote generated by the AI!
+1. Start with Issue #01 (Project Setup)
+2. Complete foundation issues (#02-08) in order
+3. Work through core features (#09-14)
+4. Implement advanced features (#15-17)
+5. Complete final testing (#18)
 
-## Available Endpoints
+Each issue is designed to be completed in 60-120 minutes and builds upon previous issues.
 
-### Backend Endpoints
+---
 
-- `GET /` - Welcome message
-- `GET /health` - Health check endpoint
-- `GET /api/random-quote` - Sample endpoint to connect Frontend and Backend (generates random quote using Gemini LLM)
+## Important Reminders
 
-## Development Commands
+- **NO OCR libraries** - Use Vision LLM instead
+- **NO object detection libraries** - Use Vision LLM for all image understanding
+- **NO PostgreSQL** - Use SQLite only
+- **NO JWT/OAuth** - Use Firebase Auth only
+- Property valuation is **educational**, not professional
+- Focus on LLM-based analysis, not traditional computer vision
+- Main image (required) and floor plan (optional) are uploaded together during property creation
 
-### Backend
-
-```bash
-# Run development server with auto-reload
-uvicorn main:app --reload
-
-# Run on specific port
-uvicorn main:app --reload --port 8001
-```
-
-### Frontend
-
-```bash
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-
-# Run linter
-npm run lint
-```
-
-## Technologies Used
-
-### Backend
-
-- **FastAPI** - Modern Python web framework
-- **Uvicorn** - ASGI server
-- **Google Generative AI** - Gemini LLM integration
-- **python-dotenv** - Environment variable management
-
-### Frontend
-
-- **React 19** - UI library
-- **Vite** - Build tool and dev server
-- **Tailwind CSS** - Utility-first CSS framework
-- **ESLint** - Code linting
-
-## Next Steps
-
-Once everything is running fine, here are some steps to extend this template:
-
-1. **Create your own backend endpoints**
-
-   - Add new API endpoints in `Backend/main.py`
-   - Use FastAPI decorators like `@app.get()`, `@app.post()`, `@app.put()`, `@app.delete()`
-   - Test your endpoints using the Swagger UI at http://localhost:8000/docs
-
-2. **Integrate new endpoints to the frontend**
-
-   - Create new components in `Frontend/src/components/` folder
-   - Update `Frontend/src/App.jsx` to include your new components
-   - Use `fetch()` or libraries like `axios` to make API calls
-   - Handle loading states and errors appropriately
-   - Update the UI to display the data from your new endpoints
+---
 
 ## Resources
 
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [React Documentation](https://react.dev/)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [Google Generative AI Documentation](https://ai.google.dev/docs)
+- [Firebase Authentication](https://firebase.google.com/docs/auth)
+- [LangChain Documentation](https://python.langchain.com/)
+- [Google Gemini API](https://ai.google.dev/docs)
+
+---
 
 ## License
 

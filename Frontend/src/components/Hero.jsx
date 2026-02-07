@@ -9,7 +9,10 @@ function Hero() {
         AI powered property analysis and valuation
       </p>
 
-      <a href="/signup" className="bg-white text-blue-600 px-6 py-3 rounded">
+      <a
+        href="/signup"
+        className="bg-white text-blue-600 px-6 py-3 rounded"
+      >
         Get Started
       </a>
     </section>

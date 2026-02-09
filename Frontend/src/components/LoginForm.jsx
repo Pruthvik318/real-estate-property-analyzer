@@ -6,7 +6,6 @@ import FormInput from "./FormInput";
 
 function LoginForm() {
 
-  // ===== STATE =====
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -14,7 +13,6 @@ function LoginForm() {
 
   const navigate = useNavigate();
 
-  // ===== LOGIN FUNCTION =====
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -41,7 +39,6 @@ function LoginForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
 
-        {/* Email Field */}
         <FormInput
           label="Email"
           type="email"
@@ -50,7 +47,6 @@ function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        {/* Password Field */}
         <FormInput
           label="Password"
           type="password"
@@ -59,12 +55,10 @@ function LoginForm() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        {/* ERROR MESSAGE */}
         {error && (
           <p className="text-red-500 text-sm">{error}</p>
         )}
 
-        {/* BUTTON */}
         <button
           type="submit"
           disabled={loading}

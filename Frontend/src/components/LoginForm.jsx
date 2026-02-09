@@ -39,6 +39,7 @@ function LoginForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
 
+        {/* Email Field */}
         <FormInput
           label="Email"
           type="email"
@@ -47,6 +48,7 @@ function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
         />
 
+        {/* Password Field */}
         <FormInput
           label="Password"
           type="password"

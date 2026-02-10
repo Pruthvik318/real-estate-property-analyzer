@@ -1,11 +1,14 @@
 import PropertyCard from "./PropertyCard";
 
-function PropertyList() {
+function PropertyList({ properties }) {
+
   return (
     <div className="grid md:grid-cols-3 gap-6 mt-6">
-      <PropertyCard />
-      <PropertyCard />
-      <PropertyCard />
+
+      {properties.map((property) => (
+        <PropertyCard key={property.id} property={property} />
+      ))}
+
     </div>
   );
 }

@@ -1,16 +1,26 @@
-function PropertyCard() {
+function PropertyCard({ property }) {
+
   return (
     <div className="bg-white shadow rounded p-4">
+
       <img
-      src="https://via.placeholder.com/300x200"
-      alt="property"
-      className="w-full h-40 object-cover rounded mb-3"
+        src={`http://127.0.0.1:8000/${property.thumbnail}`}
+        alt="property"
+        className="w-full h-40 object-cover rounded"
       />
 
+      <h3 className="font-bold text-lg mt-2">
+        {property.name}
+      </h3>
 
-      <h3 className="font-bold text-lg">Sample Property</h3>
-      <p>123 Main Street</p>
-      <p className="text-blue-600 font-semibold">$250,000</p>
+      <p className="text-gray-600">
+        {property.address}
+      </p>
+
+      <p className="text-sm text-blue-600 mt-2">
+        {property.valuation}
+      </p>
+
     </div>
   );
 }

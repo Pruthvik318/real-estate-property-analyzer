@@ -22,5 +22,18 @@ def create_tables():
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS property_analysis (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    property_id INTEGER,
+    analysis TEXT,
+    FOREIGN KEY(property_id) REFERENCES properties(id)
+    )
+    """)
+
+
     conn.commit()
     conn.close()
+
+
+

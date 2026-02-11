@@ -19,9 +19,14 @@ load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # Initialize Gemini
-llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", google_api_key=GEMINI_API_KEY)
-vision_llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", google_api_key=GEMINI_API_KEY)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", google_api_key=GEMINI_API_KEY)
+vision_llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", google_api_key=GEMINI_API_KEY)
 
+
+# -------------------------------
+# UTILITY IMPORTS
+# -------------------------------
+from utils import retry_with_backoff
 
 # -------------------------------
 # DATABASE IMPORTS
@@ -251,17 +256,18 @@ def fetch_property(property_id: int):
 
 
 
+@retry_with_backoff(retries=3, initial_delay=2.0)
 async def analyze_property_with_vision(image_paths: List[str]):
     """
     Uses Vision LLM to extract features from property images.
     """
     # Simply using the first image for analysis for now
     if not image_paths:
-        return None
+        return None, "No image paths provided"
     
     image_path = image_paths[0]
     if not os.path.exists(image_path):
-        return None
+        return None, f"Image file not found at {image_path}"
 
     # Using ChatGoogleGenerativeAI with Vision
     import base64
@@ -298,12 +304,13 @@ async def analyze_property_with_vision(image_paths: List[str]):
         # Sometimes LLM wraps JSON in ```json ... ```
         json_match = re.search(r'\{.*\}', content_text, re.DOTALL)
         if json_match:
-            return json.loads(json_match.group())
-        return None
+            return json.loads(json_match.group()), None
+        return None, "Failed to parse JSON from LLM response"
     except Exception as e:
         print(f"Vision Analysis Error: {e}")
-        return None
+        return None, str(e)
 
+@retry_with_backoff(retries=3, initial_delay=2.0)
 async def generate_property_description(property_metadata: dict, analysis_data: dict):
     """
     Uses Text LLM to generate a professional property description.
@@ -345,6 +352,7 @@ async def generate_property_description(property_metadata: dict, analysis_data: 
         
     return content
 
+@retry_with_backoff(retries=3, initial_delay=2.0)
 async def estimate_property_value(property_metadata: dict, analysis_data: dict):
     """
     Uses Text LLM to estimate property value and provide reasoning.
@@ -512,9 +520,9 @@ async def reanalyze_property(property_id: int):
     if property_data["floor_plan"]:
         image_paths.append(property_data["floor_plan"])
         
-    analysis_results = await analyze_property_with_vision(image_paths)
+    analysis_results, error_msg = await analyze_property_with_vision(image_paths)
     if not analysis_results:
-        raise HTTPException(status_code=500, detail="Failed to analyze images")
+        raise HTTPException(status_code=500, detail=f"Failed to analyze images: {error_msg}")
     
     # 3. Generate description using Text LLM
     description = await generate_property_description(dict(property_data), analysis_results)

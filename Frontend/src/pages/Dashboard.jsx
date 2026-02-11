@@ -3,12 +3,36 @@ import PropertyList from "../components/PropertyList";
 import SearchBar from "../components/SearchBar";
 import FilterPanel from "../components/FilterPanel";
 import Navbar from "../components/Navbar";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 function Dashboard() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedIds, setSelectedIds] = useState([]);
+  const navigate = useNavigate();
+
+  const handleSelect = (id) => {
+    setSelectedIds(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(item => item !== id);
+      }
+      if (prev.length >= 2) {
+        // Option 1: Replace the oldest selection
+        // return [prev[1], id];
+        // Option 2: Just don't allow it (let's do this per requirements)
+        alert("You can only select up to 2 properties for comparison.");
+        return prev;
+      }
+      return [...prev, id];
+    });
+  };
+
+  const handleCompare = () => {
+    if (selectedIds.length === 2) {
+      navigate(`/compare?id1=${selectedIds[0]}&id2=${selectedIds[1]}`);
+    }
+  };
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -92,10 +116,56 @@ function Dashboard() {
                 </span>
               </h2>
             </div>
-            <PropertyList properties={properties} />
+            <PropertyList
+              properties={properties}
+              onSelect={handleSelect}
+              selectedIds={selectedIds}
+              selectionEnabled={true}
+            />
           </div>
         )}
       </main>
+
+      {/* Floating Selection Bar */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-10 duration-500">
+          <div className="bg-slate-800/90 backdrop-blur-xl border border-white/10 rounded-3xl px-6 py-4 shadow-2xl flex items-center gap-8 min-w-[320px]">
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-3">
+                {selectedIds.map(id => (
+                  <div key={id} className="w-10 h-10 rounded-full border-2 border-slate-800 bg-indigo-500 flex items-center justify-center text-[10px] font-bold">
+                    {properties.find(p => p.id === id)?.name.slice(0, 1) || "P"}
+                  </div>
+                ))}
+              </div>
+              <span className="text-sm font-medium text-slate-300">
+                {selectedIds.length} propert{selectedIds.length > 1 ? "ies" : "y"} selected
+              </span>
+            </div>
+
+            <div className="h-8 w-[1px] bg-white/10"></div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSelectedIds([])}
+                className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors"
+              >
+                Clear
+              </button>
+              <button
+                onClick={handleCompare}
+                disabled={selectedIds.length < 2}
+                className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${selectedIds.length === 2
+                    ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 active:scale-95"
+                    : "bg-slate-700 text-slate-500 cursor-not-allowed"
+                  }`}
+              >
+                Compare Selected
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

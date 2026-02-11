@@ -9,6 +9,7 @@ import AddProperty from "./pages/AddProperty";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import PropertyDetail from "./pages/PropertyDetail";
+import PropertyComparison from "./pages/PropertyComparison";
 
 function App() {
   return (
@@ -45,6 +46,14 @@ function App() {
           element={
             <ProtectedRoute>
               <PropertyDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/compare"
+          element={
+            <ProtectedRoute>
+              <PropertyComparison />
             </ProtectedRoute>
           }
         />

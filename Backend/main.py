@@ -122,6 +122,59 @@ def fetch_all_properties():
     return properties
 
 
+@app.get("/api/properties/compare")
+def compare_properties(id1: int, id2: int):
+    def get_details(pid):
+        p_data, p_analysis = get_property_by_id(pid)
+        if not p_data: return None
+        a_dict = dict(p_analysis) if p_analysis else None
+        if a_dict and a_dict.get("features") and isinstance(a_dict["features"], str):
+            a_dict["features"] = [f.strip() for f in a_dict["features"].split(",")]
+        return {
+            "id": p_data["id"],
+            "name": p_data["name"],
+            "address": p_data["address"],
+            "mainImage": p_data["main_image"],
+            "floorPlan": p_data["floor_plan"],
+            "description": p_data["description"],
+            "valuation": p_data["valuation"],
+            "valuation_reasoning": p_data["valuation_reasoning"],
+            "analysis": a_dict
+        }
+    
+    prop1 = get_details(id1)
+    prop2 = get_details(id2)
+    
+    if not prop1 or not prop2:
+        raise HTTPException(status_code=404, detail="One or both properties not found")
+
+    # Generate AI Verdict
+    verdict = "Comparison complete. Analyze metrics below."
+    try:
+        prompt = f"""
+        Compare these two real estate properties and provide a "Final Verdict" on which one is a better investment or choice.
+        
+        Property 1: {prop1['name']} at {prop1['address']}. 
+        Value: {prop1['valuation']}. Style: {prop1.get('analysis', {}).get('style')}.
+        
+        Property 2: {prop2['name']} at {prop2['address']}. 
+        Value: {prop2['valuation']}. Style: {prop2.get('analysis', {}).get('style')}.
+        
+        Provide a 2-3 sentence professional recommendation. Be decisive but professional.
+        Format: Start with "REACTION: [Property Name] is the stronger choice because..."
+        """
+        response = llm.invoke(prompt)
+        verdict = response.content
+        if isinstance(verdict, list):
+            verdict = "".join([c.get("text", "") if isinstance(c, dict) else str(c) for c in verdict])
+    except Exception as e:
+        print(f"Verdict Error: {e}")
+        
+    return {
+        "properties": [prop1, prop2],
+        "verdict": verdict
+    }
+
 @app.get("/api/properties/{property_id}")
 def fetch_property(property_id: int):
 
@@ -146,6 +199,7 @@ def fetch_property(property_id: int):
         "valuation_reasoning": property_data["valuation_reasoning"],
         "analysis": analysis_dict
     }
+
 
 
 async def analyze_property_with_vision(image_paths: List[str]):

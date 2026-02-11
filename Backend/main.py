@@ -454,16 +454,12 @@ async def delete_property(property_id: int):
     try_delete_file(property_data["main_image"])
     try_delete_file(property_data["floor_plan"])
     
-    # 3. Delete from database (cascading manually or via SQL)
+    # 3. Delete from database
     conn = get_connection()
     cursor = conn.cursor()
-    
     try:
-        # Delete analysis first due to foreign key (if not CASCADE)
         cursor.execute("DELETE FROM property_analysis WHERE property_id = ?", (property_id,))
-        # Delete property
         cursor.execute("DELETE FROM properties WHERE id = ?", (property_id,))
-        
         conn.commit()
     except Exception as e:
         conn.rollback()
@@ -471,8 +467,39 @@ async def delete_property(property_id: int):
     finally:
         conn.close()
     
-    return {"message": "Property and associated data deleted successfully"}
+    return {"message": "Property deleted successfully"}
 
+@app.patch("/api/properties/{property_id}")
+async def update_property(property_id: int, name: str = Form(None), address: str = Form(None), propertyType: str = Form(None)):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM properties WHERE id = ?", (property_id,))
+    if not cursor.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    updates = []
+    params = []
+    if name:
+        updates.append("name = ?")
+        params.append(name)
+    if address:
+        updates.append("address = ?")
+        params.append(address)
+    if propertyType:
+        updates.append("property_type = ?")
+        params.append(propertyType)
+        
+    if not updates:
+        conn.close()
+        return {"message": "No updates provided"}
+        
+    sql = f"UPDATE properties SET {', '.join(updates)} WHERE id = ?"
+    params.append(property_id)
+    cursor.execute(sql, params)
+    conn.commit()
+    conn.close()
+    return {"message": "Property updated successfully"}
 @app.post("/api/properties/{property_id}/analyze")
 async def reanalyze_property(property_id: int):
     # 1. Get property details

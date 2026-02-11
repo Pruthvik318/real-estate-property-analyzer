@@ -15,6 +15,7 @@ function PropertyDetail() {
   const [error, setError] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [valuating, setValuating] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
@@ -39,6 +40,34 @@ function PropertyDetail() {
 
     fetchProperty();
   }, [id]);
+
+  const handleValuation = async () => {
+    try {
+      setValuating(true);
+      const response = await fetch(`http://127.0.0.1:8000/api/properties/${id}/valuation`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Valuation failed");
+      }
+
+      const data = await response.json();
+
+      setProperty(prev => ({
+        ...prev,
+        valuation: data.valuation,
+        valuation_reasoning: data.reasoning
+      }));
+
+      alert("Valuation complete!");
+    } catch (err) {
+      alert("Valuation failed: " + err.message);
+    } finally {
+      setValuating(false);
+    }
+  };
 
   const handleAnalyze = async () => {
     try {
@@ -191,8 +220,8 @@ function PropertyDetail() {
               onClick={handleAnalyze}
               disabled={analyzing}
               className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all shadow-lg active:scale-95 ${analyzing
-                  ? "bg-slate-800 text-slate-500 cursor-not-allowed"
-                  : "bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-indigo-500/20"
+                ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                : "bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-indigo-500/20"
                 }`}
             >
               {analyzing ? (
@@ -209,6 +238,29 @@ function PropertyDetail() {
                 </>
               )}
             </button>
+            <button
+              onClick={handleValuation}
+              disabled={valuating}
+              className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all shadow-lg active:scale-95 ${valuating
+                  ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                  : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20"
+                }`}
+            >
+              {valuating ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-slate-500 border-t-white rounded-full animate-spin"></div>
+                  Estimating...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Estimate Value
+                </>
+              )}
+            </button>
+
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="flex items-center gap-2 px-6 py-3 border border-slate-700 bg-slate-800/50 hover:bg-red-500/10 hover:border-red-500/50 text-slate-400 hover:text-red-500 rounded-2xl font-bold transition-all backdrop-blur-sm active:scale-95"

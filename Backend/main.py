@@ -242,6 +242,97 @@ async def generate_property_description(property_metadata: dict, analysis_data: 
         
     return content
 
+async def estimate_property_value(property_metadata: dict, analysis_data: dict):
+    """
+    Uses Text LLM to estimate property value and provide reasoning.
+    """
+    prompt_template = PromptTemplate.from_template(
+        """
+        You are an expert real estate appraiser with deep knowledge of global property markets. 
+        Based on the following property details, provide an estimated market valuation in USD and a detailed professional reasoning.
+        
+        Property Details:
+        Name: {name}
+        Address: {address}
+        Room Count: {room_count}
+        Condition: {condition}
+        Style: {style}
+        Key Features: {features}
+        
+        Format your response STRICTLY as JSON with these keys:
+        - valuation: (a number representing the value in USD)
+        - reasoning: (2-3 sentences explaining why this value was chosen based on style, condition, and location)
+        
+        Valuation should be a realistic estimate. 
+        If the location seems high-end (e.g., Malibu, New York, London), reflect that in the price.
+        """
+    )
+    
+    chain = prompt_template | llm
+    
+    features = analysis_data.get("features", [])
+    features_str = ", ".join(features) if isinstance(features, list) else str(features)
+    
+    response = chain.invoke({
+        "name": property_metadata["name"],
+        "address": property_metadata["address"],
+        "room_count": analysis_data.get("room_count", "N/A"),
+        "condition": analysis_data.get("condition", "Good"),
+        "style": analysis_data.get("style", "Modern"),
+        "features": features_str
+    })
+    
+    content = response.content
+    if isinstance(content, list):
+        content = "".join([c.get("text", "") if isinstance(c, dict) else str(c) for c in content])
+    
+    # Extract JSON from response
+    import json
+    import re
+    
+    json_match = re.search(r'\{.*\}', content, re.DOTALL)
+    if json_match:
+        try:
+            data = json.loads(json_match.group(0))
+            return data
+        except:
+            return {"valuation": 0, "reasoning": "Could not parse valuation data."}
+    
+    return {"valuation": 0, "reasoning": "No valuation generated."}
+
+@app.post("/api/properties/{property_id}/valuation")
+async def get_valuation(property_id: int):
+    # 1. Get property and analysis
+    property_data, analysis_db = get_property_by_id(property_id)
+    if not property_data:
+        raise HTTPException(status_code=404, detail="Property not found")
+        
+    if not analysis_db:
+        raise HTTPException(status_code=400, detail="AI Analysis required before valuation. Please run re-analyze first.")
+        
+    # Convert DB row to dict for easier access
+    analysis_data = {
+        "room_count": analysis_db["room_count"],
+        "condition": analysis_db["condition"],
+        "style": analysis_db["style"],
+        "features": analysis_db["features"]
+    }
+    
+    # 2. Get valuation from LLM
+    valuation_results = await estimate_property_value(dict(property_data), analysis_data)
+    
+    # 3. Update database
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE properties SET valuation = ?, valuation_reasoning = ? WHERE id = ?",
+        (valuation_results.get("valuation"), valuation_results.get("reasoning"), property_id)
+    )
+    conn.commit()
+    conn.close()
+    
+    return valuation_results
+
 @app.delete("/api/properties/{property_id}")
 async def delete_property(property_id: int):
     # 1. Get property details to find image paths

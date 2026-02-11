@@ -11,23 +11,31 @@ function ValuationCard({ valuation, reasoning }) {
 
         <div className="flex items-baseline gap-2 mb-8">
           <span className="text-4xl md:text-5xl font-black text-white">
-            {valuation ? `$${valuation.toLocaleString()}` : "Calculating..."}
+            {valuation ? `$${Number(valuation).toLocaleString()}` : "Pending AI"}
           </span>
-          {valuation && <span className="text-emerald-400 font-bold text-sm">+2.4% market avg</span>}
+          {valuation > 0 && <span className="text-emerald-400 font-bold text-sm">Market Estimate</span>}
         </div>
 
         <div className="space-y-4">
           <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
             <p className="text-slate-300 text-sm leading-relaxed italic">
-              " {reasoning || "Evaluation in progress. Our AI is crunching local market data and property unique features to provide the most accurate estimate."} "
+              " {reasoning || "Please click 'Estimate Value' to generate an AI-powered market valuation based on property features."} "
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-slate-500 text-xs font-medium px-1">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Refined by AI Market Vision™
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 text-slate-500 text-[10px] font-medium px-1 uppercase tracking-wider">
+              <svg className="w-4 h-4 text-indigo-500/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              AI Market Analysis Confidence: High
+            </div>
+
+            <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl">
+              <p className="text-[10px] text-amber-500/70 leading-tight">
+                <span className="font-bold">EDUCATIONAL DISCLAIMER:</span> This valuation is an AI-generated estimate for educational purposes only. It is NOT a professional appraisal and should not be used for financial or legal decisions.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -36,4 +44,5 @@ function ValuationCard({ valuation, reasoning }) {
 }
 
 export default ValuationCard;
+
 

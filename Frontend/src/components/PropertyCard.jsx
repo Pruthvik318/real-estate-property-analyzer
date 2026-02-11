@@ -19,8 +19,8 @@ function PropertyCard({ property, onSelect, isSelected, selectionEnabled }) {
           onClick={handleSelect}
           type="button"
           className={`absolute top-4 left-4 z-30 w-10 h-10 rounded-2xl border-2 flex items-center justify-center cursor-pointer transition-all duration-300 active:scale-90 ${isSelected
-              ? "bg-indigo-600 border-indigo-400 shadow-[0_0_20px_rgba(79,70,229,0.4)]"
-              : "bg-slate-900/80 border-white/20 hover:border-indigo-500/50 hover:bg-slate-800 backdrop-blur-xl"
+            ? "bg-indigo-600 border-indigo-400 shadow-[0_0_20px_rgba(79,70,229,0.4)]"
+            : "bg-slate-900/80 border-white/20 hover:border-indigo-500/50 hover:bg-slate-800 backdrop-blur-xl"
             }`}
         >
           {isSelected ? (
@@ -45,10 +45,15 @@ function PropertyCard({ property, onSelect, isSelected, selectionEnabled }) {
               alt={property.name}
               className="w-full h-full object-cover transition-transform duration-710 group-hover:scale-110"
             />
-            <div className="absolute top-3 right-3">
+            <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
               <span className="px-3 py-1 bg-black/40 backdrop-blur-md border border-white/10 rounded-full text-white text-[10px] font-bold uppercase tracking-wider">
                 {property.floorPlan ? "AI Analysis Ready" : "Inventory"}
               </span>
+              {property.propertyType && (
+                <span className="px-3 py-1 bg-indigo-500/40 backdrop-blur-md border border-indigo-500/30 rounded-full text-white text-[10px] font-bold uppercase tracking-wider">
+                  {property.propertyType}
+                </span>
+              )}
             </div>
 
             {/* Dark Overlay on Hover */}

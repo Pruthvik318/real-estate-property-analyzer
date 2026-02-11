@@ -7,6 +7,7 @@ import Navbar from "../components/Navbar";
 function AddProperty() {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
+  const [propertyType, setPropertyType] = useState("");
   const [mainImage, setMainImage] = useState(null);
   const [floorPlan, setFloorPlan] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -23,6 +24,7 @@ function AddProperty() {
     const formData = new FormData();
     formData.append("name", name);
     formData.append("address", address);
+    formData.append("propertyType", propertyType);
     formData.append("mainImage", mainImage);
 
     if (floorPlan) {
@@ -46,6 +48,13 @@ function AddProperty() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "name") setName(value);
+    if (name === "address") setAddress(value);
+    if (name === "propertyType") setPropertyType(value);
   };
 
   return (
@@ -78,11 +87,8 @@ function AddProperty() {
           <PropertyForm
             name={name}
             address={address}
-            onChange={(e) =>
-              e.target.name === "name"
-                ? setName(e.target.value)
-                : setAddress(e.target.value)
-            }
+            propertyType={propertyType}
+            onChange={handleChange}
           />
 
           <div className="pt-6 border-t border-white/5">
@@ -98,8 +104,8 @@ function AddProperty() {
             type="submit"
             disabled={loading}
             className={`w-full py-4 rounded-2xl font-black text-lg transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-3 ${loading
-                ? "bg-slate-700 text-slate-500 cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20"
+              ? "bg-slate-700 text-slate-500 cursor-not-allowed"
+              : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20"
               }`}
           >
             {loading ? (
@@ -123,4 +129,3 @@ function AddProperty() {
 }
 
 export default AddProperty;
-

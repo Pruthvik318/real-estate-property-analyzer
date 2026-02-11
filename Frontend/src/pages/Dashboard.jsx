@@ -10,6 +10,10 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
   const navigate = useNavigate();
 
   const handleSelect = (id) => {
@@ -18,9 +22,6 @@ function Dashboard() {
         return prev.filter(item => item !== id);
       }
       if (prev.length >= 2) {
-        // Option 1: Replace the oldest selection
-        // return [prev[1], id];
-        // Option 2: Just don't allow it (let's do this per requirements)
         alert("You can only select up to 2 properties for comparison.");
         return prev;
       }
@@ -34,12 +35,32 @@ function Dashboard() {
     }
   };
 
+  const handleFilterChange = (name, value) => {
+    if (name === "type") setFilterType(value);
+    if (name === "minPrice") setMinPrice(value);
+    if (name === "maxPrice") setMaxPrice(value);
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setFilterType("");
+    setMinPrice("");
+    setMaxPrice("");
+  };
+
   useEffect(() => {
-    const fetchProperties = async () => {
+    const fetchFilteredProperties = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/properties");
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (searchQuery) params.append("query", searchQuery);
+        if (filterType) params.append("type", filterType);
+        if (minPrice !== "") params.append("minPrice", minPrice);
+        if (maxPrice !== "") params.append("maxPrice", maxPrice);
+
+        const response = await fetch(`http://127.0.0.1:8000/api/search?${params.toString()}`);
         if (!response.ok) {
-          throw new Error("Failed to fetch properties");
+          throw new Error("Failed to search properties");
         }
         const data = await response.json();
         setProperties(data);
@@ -50,8 +71,12 @@ function Dashboard() {
       }
     };
 
-    fetchProperties();
-  }, []);
+    const debounceTimer = setTimeout(() => {
+      fetchFilteredProperties();
+    }, 400);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, filterType, minPrice, maxPrice]);
 
   return (
     <div className="min-h-screen bg-slate-900 text-white pb-20">
@@ -81,13 +106,17 @@ function Dashboard() {
         </div>
 
         {/* Search and Filters */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-10">
-          <div className="lg:col-span-3">
-            <SearchBar />
-          </div>
-          <div>
-            <FilterPanel />
-          </div>
+        <div className="flex flex-col gap-6 mb-10">
+          <SearchBar
+            query={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
+          <FilterPanel
+            filterType={filterType}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            onFilterChange={handleFilterChange}
+          />
         </div>
 
         {/* Content Area */}
@@ -116,12 +145,29 @@ function Dashboard() {
                 </span>
               </h2>
             </div>
-            <PropertyList
-              properties={properties}
-              onSelect={handleSelect}
-              selectedIds={selectedIds}
-              selectionEnabled={true}
-            />
+            {properties.length === 0 && (searchQuery || filterType || minPrice || maxPrice) ? (
+              <div className="text-center py-20 bg-slate-800/20 rounded-3xl border border-slate-700/50 border-dashed animate-in fade-in zoom-in duration-500">
+                <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700">
+                  <svg className="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <p className="text-slate-400 font-medium mb-6 text-lg">No properties match your search criteria.</p>
+                <button
+                  onClick={clearFilters}
+                  className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
+                >
+                  Clear All Filters
+                </button>
+              </div>
+            ) : (
+              <PropertyList
+                properties={properties}
+                onSelect={handleSelect}
+                selectedIds={selectedIds}
+                selectionEnabled={true}
+              />
+            )}
           </div>
         )}
       </main>
@@ -156,8 +202,8 @@ function Dashboard() {
                 onClick={handleCompare}
                 disabled={selectedIds.length < 2}
                 className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${selectedIds.length === 2
-                    ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 active:scale-95"
-                    : "bg-slate-700 text-slate-500 cursor-not-allowed"
+                  ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 active:scale-95"
+                  : "bg-slate-700 text-slate-500 cursor-not-allowed"
                   }`}
               >
                 Compare Selected

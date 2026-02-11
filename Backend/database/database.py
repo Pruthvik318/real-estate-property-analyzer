@@ -21,6 +21,7 @@ def create_tables():
         main_image TEXT NOT NULL,
         floor_plan TEXT,
         description TEXT,
+        property_type TEXT,
         valuation REAL,
         valuation_reasoning TEXT
     )

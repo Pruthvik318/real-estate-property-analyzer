@@ -116,10 +116,59 @@ def fetch_all_properties():
             "name": row["name"],
             "address": row["address"],
             "mainImage": row["main_image"],
-            "floorPlan": row["floor_plan"]
+            "floorPlan": row["floor_plan"],
+            "propertyType": row["property_type"],
+            "valuation": row["valuation"]
         })
         
     return properties
+
+@app.get("/api/search")
+def search_properties(
+    query: Optional[str] = None,
+    type: Optional[str] = None,
+    minPrice: Optional[float] = None,
+    maxPrice: Optional[float] = None
+):
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    sql = "SELECT * FROM properties WHERE 1=1"
+    params = []
+    
+    if query:
+        sql += " AND (name LIKE ? OR address LIKE ?)"
+        params.extend([f"%{query}%", f"%{query}%"])
+    
+    if type:
+        sql += " AND property_type = ?"
+        params.append(type)
+        
+    if minPrice is not None:
+        sql += " AND valuation >= ?"
+        params.append(minPrice)
+        
+    if maxPrice is not None:
+        sql += " AND valuation <= ?"
+        params.append(maxPrice)
+        
+    cursor.execute(sql, params)
+    rows = cursor.fetchall()
+    conn.close()
+    
+    results = []
+    for row in rows:
+        results.append({
+            "id": row["id"],
+            "name": row["name"],
+            "address": row["address"],
+            "mainImage": row["main_image"],
+            "floorPlan": row["floor_plan"],
+            "propertyType": row["property_type"],
+            "valuation": row["valuation"]
+        })
+        
+    return results
 
 
 @app.get("/api/properties/compare")
@@ -530,6 +579,7 @@ def random_quote():
 async def create_property(
     name: str = Form(...),
     address: str = Form(...),
+    propertyType: str = Form(...),
     mainImage: UploadFile = File(...),
     floorPlan: UploadFile = File(None)
 ):
@@ -546,10 +596,10 @@ async def create_property(
 
     cursor.execute(
         """
-        INSERT INTO properties (name, address, main_image, floor_plan)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO properties (name, address, main_image, floor_plan, property_type)
+        VALUES (?, ?, ?, ?, ?)
         """,
-        (name, address, main_image_path, floor_plan_path)
+        (name, address, main_image_path, floor_plan_path, propertyType)
     )
 
     conn.commit()

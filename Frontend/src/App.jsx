@@ -8,6 +8,8 @@ import AddProperty from "./pages/AddProperty";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
+import PropertyDetail from "./pages/PropertyDetail";
+
 function App() {
   return (
     <BrowserRouter>
@@ -37,6 +39,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/properties/:id"
+          element={
+            <ProtectedRoute>
+              <PropertyDetail />
+            </ProtectedRoute>
+          }
+        />
+
 
       </Routes>
     </BrowserRouter>

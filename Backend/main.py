@@ -45,6 +45,82 @@ def save_file(file: UploadFile):
 
     return file_path
 
+
+def get_property_by_id(property_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT * FROM properties WHERE id = ?",
+        (property_id,)
+    )
+
+    property_data = cursor.fetchone()
+
+    cursor.execute(
+        "SELECT * FROM property_analysis WHERE property_id = ?",
+        (property_id,)
+    )
+
+    analysis = cursor.fetchone()
+
+    conn.close()
+
+    return property_data, analysis
+
+
+@app.get("/api/properties")
+def fetch_all_properties():
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM properties")
+    rows = cursor.fetchall()
+    
+    conn.close()
+    
+    properties = []
+    for row in rows:
+        properties.append({
+            "id": row["id"],
+            "name": row["name"],
+            "address": row["address"],
+            "mainImage": row["main_image"],
+            "floorPlan": row["floor_plan"]
+        })
+        
+    return properties
+
+
+@app.get("/api/properties/{property_id}")
+def fetch_property(property_id: int):
+
+    property_data, analysis = get_property_by_id(property_id)
+
+    if not property_data:
+        return {"error": "Property not found"}
+
+    # Convert analysis to dict and handle features which might be a comma-separated string
+    analysis_dict = dict(analysis) if analysis else None
+    if analysis_dict and analysis_dict.get("features"):
+        analysis_dict["features"] = [f.strip() for f in analysis_dict["features"].split(",")]
+
+    return {
+        "id": property_data["id"],
+        "name": property_data["name"],
+        "address": property_data["address"],
+        "mainImage": property_data["main_image"],
+        "floorPlan": property_data["floor_plan"],
+        "description": property_data["description"],
+        "valuation": property_data["valuation"],
+        "valuation_reasoning": property_data["valuation_reasoning"],
+        "analysis": analysis_dict
+    }
+
+
+
+
+
 # -------------------------------
 # ROOT ENDPOINT
 # -------------------------------

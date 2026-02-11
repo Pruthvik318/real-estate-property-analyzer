@@ -14,6 +14,8 @@ function PropertyDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -51,18 +53,36 @@ function PropertyDetail() {
 
       const data = await response.json();
 
-      // Update local state with new analysis and description
       setProperty(prev => ({
         ...prev,
         description: data.description,
         analysis: data.analysis
       }));
 
-      alert("AI Analysis complete! Description and features have been updated.");
+      alert("AI Analysis complete!");
     } catch (err) {
       alert("Failed to analyze property: " + err.message);
     } finally {
       setAnalyzing(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      setDeleting(true);
+      const response = await fetch(`http://127.0.0.1:8000/api/properties/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete property");
+      }
+
+      navigate("/dashboard");
+    } catch (err) {
+      alert("Error deleting property: " + err.message);
+      setDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -72,7 +92,7 @@ function PropertyDetail() {
         <Navbar />
         <div className="flex flex-col items-center justify-center h-[calc(100vh-64px)]">
           <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
-          <p className="mt-4 text-slate-400 font-medium">Loading property details...</p>
+          <p className="mt-4 text-slate-400 font-medium">Loading details...</p>
         </div>
       </div>
     );
@@ -99,8 +119,47 @@ function PropertyDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white pb-20">
+    <div className="min-h-screen bg-slate-900 text-white pb-20 relative">
       <Navbar />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setShowDeleteConfirm(false)}></div>
+          <div className="relative bg-slate-800 border border-slate-700 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
+              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold mb-2">Delete Property?</h3>
+            <p className="text-slate-400 mb-8">
+              Are you sure you want to delete <span className="text-white font-semibold">"{property.name}"</span>? This action cannot be undone.
+            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 rounded-2xl font-bold transition-colors"
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-500 rounded-2xl font-bold transition-all shadow-lg shadow-red-500/20 active:scale-95 flex items-center justify-center gap-2"
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                    Deleting...
+                  </>
+                ) : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header Section */}
@@ -150,21 +209,24 @@ function PropertyDetail() {
                 </>
               )}
             </button>
-            <span className="px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400 text-sm font-semibold backdrop-blur-sm self-center">
-              Verified
-            </span>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-2 px-6 py-3 border border-slate-700 bg-slate-800/50 hover:bg-red-500/10 hover:border-red-500/50 text-slate-400 hover:text-red-500 rounded-2xl font-bold transition-all backdrop-blur-sm active:scale-95"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete
+            </button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* Main Content (Left) */}
           <div className="lg:col-span-2 space-y-10">
-            {/* Gallery Section */}
             <section className="bg-slate-800/50 border border-slate-700/50 rounded-3xl overflow-hidden backdrop-blur-sm p-4 text-center">
               <ImageGallery property={property} />
             </section>
 
-            {/* AI Analysis Section */}
             <section className="space-y-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-indigo-500/20 rounded-lg">
@@ -177,7 +239,6 @@ function PropertyDetail() {
               <AnalysisView analysis={property.analysis} />
             </section>
 
-            {/* Description Section */}
             <section className="space-y-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-indigo-500/20 rounded-lg">
@@ -207,7 +268,6 @@ function PropertyDetail() {
             </section>
           </div>
 
-          {/* Sidebar (Right) */}
           <div className="space-y-8">
             <ValuationCard
               valuation={property.valuation}

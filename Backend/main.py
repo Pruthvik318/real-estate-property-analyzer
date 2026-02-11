@@ -242,6 +242,43 @@ async def generate_property_description(property_metadata: dict, analysis_data: 
         
     return content
 
+@app.delete("/api/properties/{property_id}")
+async def delete_property(property_id: int):
+    # 1. Get property details to find image paths
+    property_data, _ = get_property_by_id(property_id)
+    if not property_data:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    # 2. Delete files from filesystem
+    def try_delete_file(path):
+        if path and os.path.exists(path):
+            try:
+                os.remove(path)
+            except Exception as e:
+                print(f"Error deleting file {path}: {e}")
+
+    try_delete_file(property_data["main_image"])
+    try_delete_file(property_data["floor_plan"])
+    
+    # 3. Delete from database (cascading manually or via SQL)
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Delete analysis first due to foreign key (if not CASCADE)
+        cursor.execute("DELETE FROM property_analysis WHERE property_id = ?", (property_id,))
+        # Delete property
+        cursor.execute("DELETE FROM properties WHERE id = ?", (property_id,))
+        
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        conn.close()
+    
+    return {"message": "Property and associated data deleted successfully"}
+
 @app.post("/api/properties/{property_id}/analyze")
 async def reanalyze_property(property_id: int):
     # 1. Get property details

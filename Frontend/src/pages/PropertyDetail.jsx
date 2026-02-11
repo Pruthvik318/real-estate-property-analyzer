@@ -13,6 +13,7 @@ function PropertyDetail() {
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -37,13 +38,41 @@ function PropertyDetail() {
     fetchProperty();
   }, [id]);
 
+  const handleAnalyze = async () => {
+    try {
+      setAnalyzing(true);
+      const response = await fetch(`http://127.0.0.1:8000/api/properties/${id}/analyze`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error("Analysis failed");
+      }
+
+      const data = await response.json();
+
+      // Update local state with new analysis and description
+      setProperty(prev => ({
+        ...prev,
+        description: data.description,
+        analysis: data.analysis
+      }));
+
+      alert("AI Analysis complete! Description and features have been updated.");
+    } catch (err) {
+      alert("Failed to analyze property: " + err.message);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 text-white">
         <Navbar />
         <div className="flex flex-col items-center justify-center h-[calc(100vh-64px)]">
           <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
-          <p className="mt-4 text-slate-400 font-medium">Analyzing property data...</p>
+          <p className="mt-4 text-slate-400 font-medium">Loading property details...</p>
         </div>
       </div>
     );
@@ -75,7 +104,7 @@ function PropertyDetail() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10">
           <div>
             <button
               onClick={() => navigate("/dashboard")}
@@ -98,11 +127,30 @@ function PropertyDetail() {
             </p>
           </div>
 
-          <div className="flex gap-3">
-            <span className="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-sm font-semibold backdrop-blur-sm">
-              AI Analyzed
-            </span>
-            <span className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-400 text-sm font-semibold backdrop-blur-sm">
+          <div className="flex flex-wrap gap-3 mt-4 lg:mt-0">
+            <button
+              onClick={handleAnalyze}
+              disabled={analyzing}
+              className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all shadow-lg active:scale-95 ${analyzing
+                  ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                  : "bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-indigo-500/20"
+                }`}
+            >
+              {analyzing ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-slate-500 border-t-white rounded-full animate-spin"></div>
+                  AI Analyzing...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  ✨ Magic AI Re-Analyze
+                </>
+              )}
+            </button>
+            <span className="px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400 text-sm font-semibold backdrop-blur-sm self-center">
               Verified
             </span>
           </div>
@@ -112,7 +160,7 @@ function PropertyDetail() {
           {/* Main Content (Left) */}
           <div className="lg:col-span-2 space-y-10">
             {/* Gallery Section */}
-            <section className="bg-slate-800/50 border border-slate-700/50 rounded-3xl overflow-hidden backdrop-blur-sm p-4">
+            <section className="bg-slate-800/50 border border-slate-700/50 rounded-3xl overflow-hidden backdrop-blur-sm p-4 text-center">
               <ImageGallery property={property} />
             </section>
 
@@ -130,23 +178,33 @@ function PropertyDetail() {
             </section>
 
             {/* Description Section */}
-            {property.description && (
-              <section className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-500/20 rounded-lg">
-                    <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
-                    </svg>
-                  </div>
-                  <h3 className="text-2xl font-bold">About this property</h3>
+            <section className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-500/20 rounded-lg">
+                  <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
+                  </svg>
                 </div>
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 backdrop-blur-sm">
+                <h3 className="text-2xl font-bold">About this property</h3>
+              </div>
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 backdrop-blur-sm">
+                {property.description ? (
                   <p className="text-slate-300 leading-relaxed text-lg whitespace-pre-line">
                     {property.description}
                   </p>
-                </div>
-              </section>
-            )}
+                ) : (
+                  <div className="text-center py-10">
+                    <p className="text-slate-500 italic mb-4">No description generated yet.</p>
+                    <button
+                      onClick={handleAnalyze}
+                      className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+                    >
+                      Click "Magic Re-Analyze" to generate one.
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
           </div>
 
           {/* Sidebar (Right) */}
@@ -172,4 +230,3 @@ function PropertyDetail() {
 }
 
 export default PropertyDetail;
-

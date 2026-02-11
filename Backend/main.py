@@ -1,7 +1,27 @@
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import random
 import os
+from dotenv import load_dotenv
+from typing import List, Optional
+
+# LangChain and Gemini imports
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.messages import HumanMessage
+from langchain_core.prompts import PromptTemplate
+from PIL import Image
+
+# -------------------------------
+# LOAD ENVIRONMENT VARIABLES
+# -------------------------------
+load_dotenv()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+# Initialize Gemini
+llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", google_api_key=GEMINI_API_KEY)
+vision_llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", google_api_key=GEMINI_API_KEY)
+
 
 # -------------------------------
 # DATABASE IMPORTS
@@ -34,16 +54,26 @@ app.add_middleware(
 # -------------------------------
 UPLOAD_FOLDER = "uploads"
 
+# -------------------------------
+# STATIC FILES
+# -------------------------------
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_FOLDER), name="uploads")
+
+
 
 def save_file(file: UploadFile):
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    
+    # Ensure forward slashes for URL compatibility even on Windows
+    url_path = file_path.replace("\\", "/")
 
     with open(file_path, "wb") as buffer:
         buffer.write(file.file.read())
 
-    return file_path
+    return url_path
 
 
 def get_property_by_id(property_id: int):
@@ -116,6 +146,167 @@ def fetch_property(property_id: int):
         "valuation_reasoning": property_data["valuation_reasoning"],
         "analysis": analysis_dict
     }
+
+
+async def analyze_property_with_vision(image_paths: List[str]):
+    """
+    Uses Vision LLM to extract features from property images.
+    """
+    # Simply using the first image for analysis for now
+    if not image_paths:
+        return None
+    
+    image_path = image_paths[0]
+    if not os.path.exists(image_path):
+        return None
+
+    # Using ChatGoogleGenerativeAI with Vision
+    import base64
+
+    def encode_image(img_path):
+        with open(img_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode('utf-8')
+
+    try:
+        base64_image = encode_image(image_path)
+        
+        message = HumanMessage(
+            content=[
+                {"type": "text", "text": "Analyze this real estate property image. Extract: estimated room count (just an integer), overall condition (Excellent/Good/Fair/Poor), architectural style (Modern/Traditional/Art Deco/etc), and a list of 5 key features. Format your response STRICTLY as JSON with these keys: room_count, condition, style, features."},
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                },
+            ]
+        )
+        
+        response = vision_llm.invoke([message])
+        
+        # Handle cases where content might be a list (common in some langchain-google-genai versions)
+        content_text = response.content
+        if isinstance(content_text, list):
+            content_text = "".join([c.get("text", "") if isinstance(c, dict) else str(c) for c in content_text])
+            
+        # Extract JSON from response
+        import json
+        import re
+
+        
+        # Sometimes LLM wraps JSON in ```json ... ```
+        json_match = re.search(r'\{.*\}', content_text, re.DOTALL)
+        if json_match:
+            return json.loads(json_match.group())
+        return None
+    except Exception as e:
+        print(f"Vision Analysis Error: {e}")
+        return None
+
+async def generate_property_description(property_metadata: dict, analysis_data: dict):
+    """
+    Uses Text LLM to generate a professional property description.
+    """
+    prompt_template = PromptTemplate.from_template(
+        """
+        You are a professional real estate copywriter. 
+        Generate a compelling, high-end property description for the following property:
+        
+        Name: {name}
+        Address: {address}
+        Room Count: {room_count}
+        Condition: {condition}
+        Style: {style}
+        Key Features: {features}
+        
+        The description should be professional, inviting, and approximately 3-4 paragraphs.
+        Focus on selling the lifestyle and highlighting the unique features discovered by our AI.
+        """
+    )
+    
+    chain = prompt_template | llm
+    
+    features = analysis_data.get("features", [])
+    features_str = ", ".join(features) if isinstance(features, list) else str(features)
+    
+    response = chain.invoke({
+        "name": property_metadata["name"],
+        "address": property_metadata["address"],
+        "room_count": analysis_data.get("room_count", "N/A"),
+        "condition": analysis_data.get("condition", "N/A"),
+        "style": analysis_data.get("style", "N/A"),
+        "features": features_str
+    })
+    
+    content = response.content
+    if isinstance(content, list):
+        content = "".join([c.get("text", "") if isinstance(c, dict) else str(c) for c in content])
+        
+    return content
+
+@app.post("/api/properties/{property_id}/analyze")
+async def reanalyze_property(property_id: int):
+    # 1. Get property details
+    property_data, existing_analysis = get_property_by_id(property_id)
+    if not property_data:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    # 2. Extract features using Vision LLM
+    image_paths = [property_data["main_image"]]
+    if property_data["floor_plan"]:
+        image_paths.append(property_data["floor_plan"])
+        
+    analysis_results = await analyze_property_with_vision(image_paths)
+    if not analysis_results:
+        raise HTTPException(status_code=500, detail="Failed to analyze images")
+    
+    # 3. Generate description using Text LLM
+    description = await generate_property_description(dict(property_data), analysis_results)
+    
+    # 4. Update database
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    # Store description
+    cursor.execute(
+        "UPDATE properties SET description = ? WHERE id = ?",
+        (description, property_id)
+    )
+    
+    # Store analysis
+    features = analysis_results.get("features", [])
+    features_str = ", ".join(features) if isinstance(features, list) else str(features)
+    
+    if existing_analysis:
+        cursor.execute(
+            """
+            UPDATE property_analysis 
+            SET room_count = ?, condition = ?, style = ?, features = ?
+            WHERE property_id = ?
+            """,
+            (analysis_results.get("room_count"), analysis_results.get("condition"), 
+             analysis_results.get("style"), features_str, property_id)
+        )
+    else:
+        cursor.execute(
+            """
+            INSERT INTO property_analysis (property_id, room_count, condition, style, features)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (property_id, analysis_results.get("room_count"), analysis_results.get("condition"), 
+             analysis_results.get("style"), features_str)
+        )
+    
+    conn.commit()
+    conn.close()
+    
+    # Format analysis results for response (consistency with fetch_property)
+    if isinstance(analysis_results.get("features"), str):
+        analysis_results["features"] = [f.strip() for f in analysis_results["features"].split(",")]
+    
+    return {
+        "description": description,
+        "analysis": analysis_results
+    }
+
 
 
 

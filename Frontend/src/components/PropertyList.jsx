@@ -1,6 +1,5 @@
 import PropertyCard from "./PropertyCard";
 
-<<<<<<< HEAD
 function PropertyList({ properties, onSelect, selectedIds, selectionEnabled }) {
 
   if (!properties || properties.length === 0) {
@@ -22,17 +21,6 @@ function PropertyList({ properties, onSelect, selectedIds, selectionEnabled }) {
           selectionEnabled={selectionEnabled}
         />
       ))}
-=======
-function PropertyList({ properties }) {
-
-  return (
-    <div className="grid md:grid-cols-3 gap-6 mt-6">
-
-      {properties.map((property) => (
-        <PropertyCard key={property.id} property={property} />
-      ))}
-
->>>>>>> origin/issue-11-display-properties
     </div>
   );
 }

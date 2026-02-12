@@ -9,4 +9,10 @@ wheels/
 # Virtual environments
 .venv
 
+
+
 .env
+uploads/
+*.db
+.venv/
+__pycache__/

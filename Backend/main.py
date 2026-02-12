@@ -578,6 +578,33 @@ async def reanalyze_property(property_id: int):
 
 
 
+
+def get_all_properties():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM properties")
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    properties = []
+
+    for row in rows:
+        properties.append({
+            "id": row["id"],
+            "name": row["name"],
+            "address": row["address"],
+            "thumbnail": row["main_image"],  # using main image
+            "valuation": "Not calculated yet"
+        })
+
+    return properties
+
+
+
+
 # -------------------------------
 # ROOT ENDPOINT
 # -------------------------------
@@ -643,3 +670,9 @@ async def create_property(
     return {
         "message": "Property uploaded successfully"
     }
+
+
+@app.get("/api/properties")
+def fetch_properties():
+    properties = get_all_properties()
+    return properties

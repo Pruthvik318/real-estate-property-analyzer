@@ -36,6 +36,7 @@ from database.database import create_tables, get_connection
 # -------------------------------
 # FASTAPI APP
 # -------------------------------
+# FastAPI Application for Property Analysis
 app = FastAPI(title="Internship Project Backend")
 
 # -------------------------------

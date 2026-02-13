@@ -1,9 +1,9 @@
-fastapi[standard]
+fastapi
 uvicorn
 python-dotenv
 langchain-google-genai
 langchain
 pillow
 google-generativeai
-python-multipart
 requests
+python-multipart>=0.0.7

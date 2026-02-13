@@ -1,5 +1,4 @@
-python-multipart
-fastapi
+fastapi[all]
 uvicorn
 python-dotenv
 langchain-google-genai

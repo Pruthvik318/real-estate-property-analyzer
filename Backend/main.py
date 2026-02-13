@@ -48,7 +48,7 @@ create_tables()
 # -------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Frontend URL
+    allow_origins=["*"],  # Allow all origins for production (or specify production URL)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

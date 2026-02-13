@@ -1,3 +1,4 @@
+python-multipart
 fastapi
 uvicorn
 python-dotenv
@@ -6,4 +7,3 @@ langchain
 pillow
 google-generativeai
 requests
-python-multipart>=0.0.7

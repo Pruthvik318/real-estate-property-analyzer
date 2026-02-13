@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { API_URL } from "../config";
 
 import ImageGallery from "../components/ImageGallery";
 import AnalysisView from "../components/AnalysisView";
@@ -26,7 +27,7 @@ function PropertyDetail() {
     const fetchProperty = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://127.0.0.1:8000/api/properties/${id}`);
+        const response = await fetch(`${API_URL}/api/properties/${id}`);
         if (!response.ok) {
           throw new Error("Failed to fetch property details");
         }
@@ -59,7 +60,7 @@ function PropertyDetail() {
       formData.append("address", editData.address);
       formData.append("propertyType", editData.propertyType);
 
-      const response = await fetch(`http://127.0.0.1:8000/api/properties/${id}`, {
+      const response = await fetch(`${API_URL}/api/properties/${id}`, {
         method: 'PATCH',
         body: formData,
       });
@@ -82,7 +83,7 @@ function PropertyDetail() {
   const handleValuation = async () => {
     try {
       setValuating(true);
-      const response = await fetch(`http://127.0.0.1:8000/api/properties/${id}/valuation`, {
+      const response = await fetch(`${API_URL}/api/properties/${id}/valuation`, {
         method: 'POST',
       });
 
@@ -110,7 +111,7 @@ function PropertyDetail() {
   const handleAnalyze = async () => {
     try {
       setAnalyzing(true);
-      const response = await fetch(`http://127.0.0.1:8000/api/properties/${id}/analyze`, {
+      const response = await fetch(`${API_URL}/api/properties/${id}/analyze`, {
         method: 'POST',
       });
 
@@ -138,7 +139,7 @@ function PropertyDetail() {
   const handleDelete = async () => {
     try {
       setDeleting(true);
-      const response = await fetch(`http://127.0.0.1:8000/api/properties/${id}`, {
+      const response = await fetch(`${API_URL}/api/properties/${id}`, {
         method: 'DELETE',
       });
 

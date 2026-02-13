@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API_URL } from "../config";
 
 export default function QuoteGenerator() {
   const [quote, setQuote] = useState("");
@@ -7,7 +8,7 @@ export default function QuoteGenerator() {
   const generateQuote = async () => {
     setError("");
     try {
-      const res = await fetch("http://localhost:8000/api/random-quote");
+      const res = await fetch(`${API_URL}/api/random-quote`);
       const data = await res.json();
       setQuote(data.quote);
     } catch (err) {

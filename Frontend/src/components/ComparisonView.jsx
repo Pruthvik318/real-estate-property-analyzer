@@ -1,3 +1,5 @@
+import { API_URL } from "../config";
+
 function ComparisonView({ properties, verdict }) {
     if (!properties || properties.length !== 2) return null;
 
@@ -28,7 +30,7 @@ function ComparisonView({ properties, verdict }) {
                     <div className="col-span-2 p-6 border-r border-white/5">
                         <div className="aspect-video rounded-2xl overflow-hidden mb-4 border border-white/10 shadow-lg">
                             <img
-                                src={`http://127.0.0.1:8000/${prop1.mainImage}`}
+                                src={`${API_URL}/${prop1.mainImage}`}
                                 alt={prop1.name}
                                 className="w-full h-full object-cover"
                             />
@@ -39,7 +41,7 @@ function ComparisonView({ properties, verdict }) {
                     <div className="col-span-2 p-6">
                         <div className="aspect-video rounded-2xl overflow-hidden mb-4 border border-white/10 shadow-lg">
                             <img
-                                src={`http://127.0.0.1:8000/${prop2.mainImage}`}
+                                src={`${API_URL}/${prop2.mainImage}`}
                                 alt={prop2.name}
                                 className="w-full h-full object-cover"
                             />

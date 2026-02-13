@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { API_URL } from "../config";
 import PropertyForm from "../components/PropertyForm";
 import ImageUploader from "../components/ImageUploader";
 import Navbar from "../components/Navbar";
@@ -34,7 +35,7 @@ function AddProperty() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/properties", {
+      const res = await fetch(`${API_URL}/api/properties`, {
         method: "POST",
         body: formData,
       });

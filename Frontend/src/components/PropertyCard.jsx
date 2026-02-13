@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { API_URL } from "../config";
 
 function PropertyCard({ property, onSelect, isSelected, selectionEnabled }) {
   if (!property) return null;
@@ -41,7 +42,7 @@ function PropertyCard({ property, onSelect, isSelected, selectionEnabled }) {
           {/* Image Container */}
           <div className="relative aspect-video overflow-hidden">
             <img
-              src={`http://127.0.0.1:8000/${property.mainImage}`}
+              src={`${API_URL}/${property.mainImage}`}
               alt={property.name}
               className="w-full h-full object-cover transition-transform duration-710 group-hover:scale-110"
             />

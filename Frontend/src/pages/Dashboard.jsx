@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API_URL } from "../config";
 import PropertyList from "../components/PropertyList";
 import SearchBar from "../components/SearchBar";
 import FilterPanel from "../components/FilterPanel";
@@ -58,7 +59,7 @@ function Dashboard() {
         if (minPrice !== "") params.append("minPrice", minPrice);
         if (maxPrice !== "") params.append("maxPrice", maxPrice);
 
-        const response = await fetch(`http://127.0.0.1:8000/api/search?${params.toString()}`);
+        const response = await fetch(`${API_URL}/api/search?${params.toString()}`);
         if (!response.ok) {
           throw new Error("Failed to search properties");
         }

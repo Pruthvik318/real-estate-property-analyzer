@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { API_URL } from "../config";
 import Navbar from "../components/Navbar";
 import ComparisonView from "../components/ComparisonView";
 
@@ -24,7 +25,7 @@ function PropertyComparison() {
 
             try {
                 setLoading(true);
-                const response = await fetch(`http://127.0.0.1:8000/api/properties/compare?id1=${id1}&id2=${id2}`);
+                const response = await fetch(`${API_URL}/api/properties/compare?id1=${id1}&id2=${id2}`);
                 if (!response.ok) {
                     const data = await response.json();
                     const errorMsg = typeof data.detail === 'string'

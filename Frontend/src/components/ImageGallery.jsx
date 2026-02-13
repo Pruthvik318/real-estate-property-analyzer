@@ -1,10 +1,12 @@
+import { API_URL } from "../config";
+
 function ImageGallery({ property }) {
   const images = [
-    { src: `http://127.0.0.1:8000/${property.mainImage}`, label: "Main View" }
+    { src: `${API_URL}/${property.mainImage}`, label: "Main View" }
   ];
 
   if (property.floorPlan) {
-    images.push({ src: `http://127.0.0.1:8000/${property.floorPlan}`, label: "Floor Plan" });
+    images.push({ src: `${API_URL}/${property.floorPlan}`, label: "Floor Plan" });
   }
 
   return (

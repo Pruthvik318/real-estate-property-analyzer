@@ -8,3 +8,4 @@ pillow
 google-generativeai
 requests
 pydantic
+

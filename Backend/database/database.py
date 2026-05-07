@@ -1,6 +1,19 @@
 import sqlite3
+import os
+import shutil
 
-DATABASE_NAME = "properties.db"
+# On Vercel, the filesystem is read-only. We use /tmp for the database to allow writes.
+if os.environ.get("VERCEL"):
+    DATABASE_NAME = "/tmp/properties.db"
+    # Copy the initial database if it exists in the app directory and not yet in /tmp
+    if not os.path.exists(DATABASE_NAME) and os.path.exists("properties.db"):
+        try:
+            shutil.copy("properties.db", DATABASE_NAME)
+        except Exception as e:
+            print(f"Error copying database: {e}")
+else:
+    DATABASE_NAME = "properties.db"
+
 
 def get_connection():
     conn = sqlite3.connect(DATABASE_NAME)

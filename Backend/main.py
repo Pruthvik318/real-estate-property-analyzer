@@ -58,13 +58,29 @@ app.add_middleware(
 # -------------------------------
 # FILE UPLOAD CONFIG
 # -------------------------------
-UPLOAD_FOLDER = "uploads"
+if os.environ.get("VERCEL"):
+    UPLOAD_FOLDER = "/tmp/uploads"
+    # Ensure /tmp/uploads exists and copy initial images from the repo
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    if os.path.exists("uploads"):
+        import shutil
+        for item in os.listdir("uploads"):
+            s = os.path.join("uploads", item)
+            d = os.path.join(UPLOAD_FOLDER, item)
+            if os.path.isfile(s) and not os.path.exists(d):
+                try:
+                    shutil.copy2(s, d)
+                except:
+                    pass
+else:
+    UPLOAD_FOLDER = "uploads"
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # -------------------------------
 # STATIC FILES
 # -------------------------------
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_FOLDER), name="uploads")
+
 
 
 

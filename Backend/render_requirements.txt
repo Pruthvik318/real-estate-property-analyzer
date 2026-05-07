@@ -1,0 +1,9 @@
+python-multipart==0.0.12
+fastapi==0.115.0
+uvicorn[standard]
+python-dotenv
+langchain-google-genai
+langchain
+pillow
+google-generativeai
+requests

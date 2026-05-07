@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "Frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
+      "src": "Backend/main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "Backend/main.py"
+    },
+    {
+      "source": "/uploads/(.*)",
+      "destination": "Backend/main.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "Frontend/"
+    }
+  ]
+}
